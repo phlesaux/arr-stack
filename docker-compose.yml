@@ -1,0 +1,105 @@
+version: '3'
+
+services:
+
+  vpn:
+    image: bubuntux/nordlynx
+    container_name: vpn
+    restart: unless-stopped
+    env_file:
+      - .env.vpn
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    ports:
+      - '6767:6767'   # Bazarr
+      - '7878:7878'   # Radarr
+      - '8080:8080'   # Torrent
+      - '8686:8686'   # Lidarr  
+      - '8989:8989'   # Sonarr
+  
+  torrent:
+    image: linuxserver/qbittorrent
+    container_name: torrent
+    restart: unless-stopped
+    env_file:
+      - .env
+   volumes:
+      - ./qbittorrent/config:/config
+      - ./downloads:/downloads
+      - /etc/localtime:/etc/localtime:ro
+    cap_add:
+      - NET_ADMIN
+    network_mode: service:vpn
+    depends_on:
+      - vpn
+
+  prowlarr:
+    image: ghcr.io/linuxserver/prowlarr
+    container_name: prowlarr
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./prowlarr/config:/config
+    network_mode: service:vpn
+    depends_on:
+      - vpn
+
+  sonarr:
+    image: ghcr.io/linuxserver/sonarr
+    container_name: sonarr
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./sonarr/config:/config
+      - ./series:/tv
+      - ./downloads/complete:/downloads
+    network_mode: service:vpn
+    depends_on:
+      - vpn
+
+  radarr:
+    image: ghcr.io/linuxserver/radarr
+    container_name: radarr
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./radarr/config:/config
+      - ./movies:/movies
+      - ./downloads/complete:/downloads
+    network_mode: service:vpn
+    depends_on:
+      - vpn
+
+  bazarr:
+    image: ghcr.io/linuxserver/bazarr
+    container_name: bazarr
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./bazarr/config:/config
+      - ./movies:/movies
+      - ./series:/series
+      - ./downloads/complete:/downloads
+    network_mode: service:vpn
+    depends_on:
+      - vpn
+
+  lidarr:
+    image: ghcr.io/linuxserver/lidarr
+    container_name: lidarr
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./lidarr/config:/config
+      - ./music:/music
+      - ./downloads/complete:/downloads
+    network_mode: service:vpn
+    depends_on:
+      - vpn
+
